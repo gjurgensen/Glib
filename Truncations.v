@@ -1,6 +1,6 @@
 Require Import Notation.
 Require Import GeneralTactics.
-Require Import Axioms.
+Require Import Axioms.Extensionality.
 
 Require Import Setoid.
 
@@ -135,13 +135,6 @@ Proof using.
   auto.
 Qed.
 
-Theorem to_trunc_choice : forall A B,
-  (A -> ‖B‖) -> ‖A -> B‖.
-Proof using.
-  intros * f.
-  now apply choice.
-Qed.
-
 Theorem truncated_eq_exists_true : forall x,
   ‖x‖ = exists _: x, True.
 Proof using.
@@ -149,3 +142,45 @@ Proof using.
   extensionality H; now destruct H.
 Qed.
 
+
+(* Various truncation-equivalents *)
+
+Lemma trunc_prod_eq_conj : forall P Q: Prop,
+  ‖P × Q‖ = (P /\ Q).
+Proof using.
+  intros *.
+  extensionality H.
+  - uninhabit H.
+    now destruct H.
+  - now inhabit.
+Qed.
+
+Lemma trunc_sig_eq_exists : forall A (P: A -> Prop),
+  ‖{x | P x}‖ = exists x, P x.
+Proof using.
+  intros *.
+  extensionality H.
+  - uninhabit H.
+    enow destruct H.
+  - enow destruct H.
+Qed.
+
+Lemma trunc_sigma_eq_exists : forall A (P: A -> Type),
+  ‖Σ x, P x‖ = exists x, ‖P x‖.
+Proof using.
+  intros *.
+  extensionality H.
+  - uninhabit H.
+    enow destruct H.
+  - enow destruct H as [? [?]].
+Qed.
+
+Lemma trunc_sum_eq_disj : forall P Q: Prop,
+  ‖{P} + {Q}‖ = (P \/ Q).
+Proof using.
+  intros *.
+  extensionality H.
+  - uninhabit H.
+    now destruct H; [left|right].
+  - now destruct H; inhabit; [left|right].
+Qed.

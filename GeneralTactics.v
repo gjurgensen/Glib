@@ -284,7 +284,7 @@ Tactic Notation "repeat+" tactic(tac) :=
 
 (* `now` tactic with support for easy goals with existentials *)
 Tactic Notation "enow" tactic(tac) :=
-  (now tac) + (tac; solve [eassumption + eauto]).
+  (now tac) + (tac; solve [eassumption + eauto + now eexists]).
 
 
 (* Find a hypothesis to apply the tactic to. Fails on non-progress. *)

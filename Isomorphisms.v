@@ -438,7 +438,7 @@ Proof using.
     split; intros; apply proof_irrelevance.
 Qed.
 
-Theorem iso_proof_irrelevance2 : forall P Q: Prop,
+Theorem iso_proof_irrelevance' : forall P Q: Prop,
   (forall (P: Prop) (p1 p2: P), p1 = p2) ->
   (P ≃ Q) ≃ (P <-> Q).
 Proof using.
