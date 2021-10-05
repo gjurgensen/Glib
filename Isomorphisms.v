@@ -363,7 +363,7 @@ Definition f_image {A B} (f: A -> B) : A -> image f.
   now exists (f a) a.
 Defined.
 
-(* Dependent on axiomatic classical choice to construct inverse *)
+(* Dependent on axiomatic choice to construct inverse *)
 Theorem inverse_injection : forall A B (f: A -> B),
   injective f ->
   exists g: image f -> A, 
@@ -378,8 +378,7 @@ Proof using.
     now apply Hinj in H.
   }
   pose proof (fun_choice _ _ (fun i a => f_image f a = i)) as g.
-  forward g.
-  { intros (x & y & <-). now exists y. }
+  forward g by (enow intros (? & ? & <-)).
   destruct g as [g H].
   exists g.
   split; [assumption|].
@@ -388,7 +387,7 @@ Proof using.
   now apply Hinj in H.
 Qed.
 
-(* Dependent on axiomatic classical choice to construct inverse *)
+(* Dependent on axiomatic choice to construct inverse *)
 Theorem f_iso_f_image : forall A B (f: A -> B),
   injective f ->
   A ≃ image f.

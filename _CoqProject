@@ -3,8 +3,11 @@
 Notation.v
 TacticCombinators.v
 GeneralTactics.v
-Axioms.v
+Axioms/Classical.v
+Axioms/Extensionality.v
+Truncations.v
+Axioms/Choice.v
+Axioms/Axioms.v
 Gen.v
 Induct.v
-Truncations.v
 Isomorphisms.v

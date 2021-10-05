@@ -6,6 +6,8 @@ Require Import Truncations.
 Require Import Axioms.Extensionality.
 
 
+(* "If `x: A` implies there exists some `B x`, then there exists 
+   some function `Π x: A, B x`". *)
 Axiom choice : Π (A: Type) (B: A -> Type),
   (Π x, ‖B x‖) -> ‖Π x, B x‖.
 

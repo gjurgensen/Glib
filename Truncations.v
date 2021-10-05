@@ -14,9 +14,6 @@ Notation "| a |" := (inhabits a)
 Notation "‖ A ‖" := (inhabited A)
   (at level 50, format "‖ A ‖").
 
-(* ascii alternative *)
-Notation "|| A ||" := (inhabited A)
-  (at level 50, only parsing).
 
 Definition to_trunc (a b: Type): Prop := a -> ‖b‖.
 
