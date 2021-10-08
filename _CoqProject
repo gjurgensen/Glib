@@ -1,4 +1,4 @@
--R . Jlib
+-R . Glib
 
 Notation.v
 TacticCombinators.v
