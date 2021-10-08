@@ -62,6 +62,23 @@ Proof using.
   exact fun_choice.
 Qed.
 
+(* Functional choice does not require an axiom when the proof of left-totalness 
+   is transparent/constructive
+ *)
+Definition fun_choice_constructive : forall A B (R: A -> B -> Prop),
+  (forall a, Σ b, R a b) ->
+  Σ f: A -> B, forall a, R a (f a).
+Proof using.
+  intros * Rltotal.
+  define exists.
+  - intro a.
+    specialize (Rltotal a).
+    now destruct Rltotal.
+  - intro a.
+    simpl.
+    now destruct (Rltotal a).
+Defined.
+
 Lemma rel_choice : forall A B (R: A -> B -> Prop),
   (forall x, exists y, R x y) -> 
   exists R': A -> B -> Prop, 

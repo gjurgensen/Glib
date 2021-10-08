@@ -71,6 +71,12 @@ Proof using.
     now induction H.
 Qed.
 
+Lemma false_is_exfalso : False = forall P: Prop, P.
+Proof using.
+  extensionality; split; intros ?.
+  - contradiction.
+  - assumption!.
+Qed.
 
 (* convenient rewrite rules from LEM + prop extensionality *)
 

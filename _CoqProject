@@ -3,6 +3,7 @@
 Notation.v
 TacticCombinators.v
 GeneralTactics.v
+Axioms/UipFacts.v
 Axioms/Classical.v
 Axioms/Extensionality.v
 Truncations.v

@@ -8,6 +8,7 @@ Require Import Coq.Relations.Relation_Operators.
 Require Import Coq.Program.Basics.
 Require Import Coq.Program.Combinators.
 Require Import Setoid.
+Require Import Lia.
 
 Open Scope program_scope.
 
@@ -164,6 +165,41 @@ Proof using.
   intros *.
   now destruct ϕ as (? & ? & ?).
 Qed.
+
+Lemma eq_cancel_left {A B}: forall (ϕ: A ≃> B) a b,
+  a = ϕ⁻¹ b ->
+  ϕ a = b.
+Proof using.
+  intros * ->.
+  apply iso_cancel_inv.
+Qed.
+
+Lemma eq_cancel_right {A B}: forall (ϕ: A ≃> B) a b,
+  ϕ⁻¹ b = a ->
+  b = ϕ a.
+Proof using.
+  intros * <-.
+  symmetry.
+  apply iso_cancel_inv.
+Qed.
+
+Lemma eq_cancel_inv_left {A B}: forall (ϕ: A ≃> B) a b,
+  b = ϕ a ->
+  ϕ⁻¹ b = a.
+Proof using.
+  intros * ->.
+  apply inv_cancel_iso.
+Qed.
+
+Lemma eq_cancel_inv_right {A B}: forall (ϕ: A ≃> B) a b,
+  ϕ a = b ->
+  a = ϕ⁻¹ b.
+Proof using.
+  intros * <-.
+  symmetry.
+  apply inv_cancel_iso.
+Qed.
+
 
 Theorem iso_iso_inv {A B}: 
   (A ≃> B) ≃> (B ≃> A).
@@ -450,5 +486,231 @@ Proof using.
   exists H1 H2.
   split; intros; apply proof_irrelevance.
 Qed. 
+
+
+(* Cardinality *)
+
+Definition type_succ (A: Type) : Type := unit + A.
+
+Definition fin_card (A: Type) (n: nat) := A ≃ {x | x < n}.
+
+Lemma exist_eq : forall A (P: A -> Prop) x y p q,
+  x = y -> 
+  exist P x p = exist P y q.
+Proof using.
+  intros * ->.
+  now rewrite (proof_irrelevance _ p q).
+Qed.
+
+Definition countable (A: Type) := A ≃ nat. 
+
+
+Ltac iso_coerc_notation := 
+  repeat match goal with 
+  | ϕ: ?A ≃> ?B |- _ =>
+      (progress change_no_check (let (x, _) := ϕ   in x) with (ϕ  : A -> B)) +
+      (progress change_no_check (let (x, _) := ϕ⁻¹ in x) with (ϕ⁻¹: B -> A))
+  end.
+
+
+Ltac is_not_var x := assert_fails (is_var x).
+
+Ltac is_proof_term p :=
+  is_not_var p;
+  match type of p with
+  | ?P => match type of P with 
+          | Prop => idtac
+          end
+  end.
+
+(* This tactic is only able to hide closed proof terms. To build a more robust tactic 
+   which abstracts open terms into closed/hideable predicates, one would likely need to 
+   implement it in Ocaml
+ *)
+Ltac hide_proof_terms := 
+  repeat match goal with 
+  | |- context[?p] =>
+      is_proof_term p;
+      let ident := fresh "p" in
+      set (ident := p);
+      clearbody ident
+  end.
+
+Ltac hide_exist_proof_terms := 
+  repeat match goal with 
+  | |- context[exist _ _ ?p] =>
+      is_not_var p;
+      let ident := fresh "pexist" in 
+      set (ident := p);
+      clearbody ident
+  end.
+
+Theorem same_fin_card : forall A B n,
+  fin_card A n ->
+  fin_card B n ->
+  A ≃ B.
+Proof using.
+  intros * ϕA ϕB.
+  inhabit isomorphic__isomorphism in ϕA;
+  inhabit isomorphic__isomorphism in ϕB.
+  exists (ϕB⁻¹ ∘ ϕA) (ϕA⁻¹ ∘ ϕB).
+  split; intros *; unfold "∘";
+    apply eq_cancel_inv_left;
+    now apply eq_cancel_left.
+Qed. 
+
+Theorem fin_succ_card : forall A n,
+  fin_card A n ->
+  fin_card (type_succ A) (S n).
+Proof using.
+  intros * ϕ.
+  inhabit isomorphic__isomorphism in ϕ.
+  define exists.
+  { intros [tt|a].
+    + exists 0.
+      lia.
+    + destruct (ϕ a) as [x xlt].
+      exists (S x).
+      lia.
+  } 
+  hide_exist_proof_terms.
+  define exists.
+  { intros [x xlt].
+    destruct x.
+    - now left.
+    - right.
+      apply ϕ⁻¹.
+      exists x.
+      lia.
+  }
+  split.
+  - intros [x xlt].
+    destruct x.
+    + now apply exist_eq.
+    + cbn.
+      iso_coerc_notation.
+      rewrite iso_cancel_inv.
+      hide_proof_terms.
+      now apply exist_eq.
+  - intros [tt|a].
+    + now destruct tt.
+    + destruct (ϕ a) as [x xlt] eqn:case.
+      hide_proof_terms.
+      cbn.
+      iso_coerc_notation.
+      f_equal.
+      apply eq_cancel_inv_left.
+      rewrite case.
+      now apply exist_eq.
+Qed.
+
+Theorem fin_sum_card : forall A B n m,
+  fin_card A n ->
+  fin_card B m ->
+  fin_card (A + B) (n + m).
+Proof using.
+  intros * ϕA ϕB.
+  inhabit isomorphic__isomorphism in ϕA;
+  inhabit isomorphic__isomorphism in ϕB.
+  define exists.
+  { intros [a|b].
+    - destruct (ϕA a) as [x xlt].
+      exists x.
+      lia.
+    - destruct (ϕB b) as [x xlt].
+      exists (n + x).
+      lia.
+  }
+  define exists.
+  { intros [x xlt].
+    destruct (Compare_dec.lt_dec x n).
+    - left.
+      apply ϕA⁻¹.
+      now exists x.
+    - right.
+      apply ϕB⁻¹.
+      exists (x - n).
+      lia.
+  }
+  split.
+  - intros [x xlt].
+    destruct (Compare_dec.lt_dec x n).
+    + cbn.
+      iso_coerc_notation.
+      rewrite iso_cancel_inv.
+      hide_proof_terms.
+      now apply exist_eq.
+    + cbn.
+      iso_coerc_notation.
+      rewrite iso_cancel_inv.
+      hide_proof_terms.
+      apply exist_eq.
+      lia.
+  - intros [a|b].
+    + destruct (ϕA a) eqn:case.
+      destruct (Compare_dec.lt_dec x n); [|contradiction].
+      cbn.
+      f_equal.
+      iso_coerc_notation.
+      apply eq_cancel_inv_left.
+      rewrite case.
+      now apply exist_eq.
+    + destruct (ϕB b) eqn:case.
+      destruct (Compare_dec.lt_dec (n + x) n); [lia|].
+      cbn.
+      hide_proof_terms.
+      f_equal.
+      iso_coerc_notation.
+      apply eq_cancel_inv_left.
+      rewrite case.
+      apply exist_eq.
+      lia.
+Qed.
+
+Theorem fin_prod_card : forall A B n m,
+  fin_card A n ->
+  fin_card B m ->
+  fin_card (A * B) (n * m).
+Proof using.
+  intros * ϕA ϕB.
+  inhabit isomorphic__isomorphism in ϕA;
+  inhabit isomorphic__isomorphism in ϕB.
+  define exists.
+  { intros [a b].
+    destruct (ϕA a) as [x xlt];
+    destruct (ϕB b) as [y ylt].
+    exists (x*m + y).
+    clear - xlt ylt.
+    nia.
+  }
+  define exists.
+  { intros [x xlt].
+    constructor.
+    - apply ϕA⁻¹.
+      exists (PeanoNat.Nat.div x m).
+      apply PeanoNat.Nat.div_lt_upper_bound; lia.
+    - apply ϕB⁻¹.
+      exists (PeanoNat.Nat.modulo x m).
+      apply PeanoNat.Nat.mod_upper_bound.
+      lia.
+  }
+  split.
+  - intros [x xlt].
+    cbn.
+    iso_coerc_notation.
+    do 2 rewrite iso_cancel_inv.
+    hide_proof_terms.
+    apply exist_eq.
+    todo.
+  - intros [a b].
+    destruct (ϕA a) as [x xlt];
+    destruct (ϕB b) as [y ylt].
+    hide_proof_terms.
+    cbn.
+    iso_coerc_notation.
+    
+
+
+Admitted.
 
 Close Scope program_scope.
